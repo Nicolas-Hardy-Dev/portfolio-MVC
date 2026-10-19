@@ -1,0 +1,9 @@
+# Identifiants de la base (local et CEFii)
+config/database.php
+
+# Fichiers système Windows
+Thumbs.db
+desktop.ini
+
+# Configuration de l'éditeur
+.vscode/
