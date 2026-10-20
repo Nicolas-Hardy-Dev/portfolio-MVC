@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\Core\Form;
+use App\Entities\Creation;
+use App\Models\CreationModel;
 
 class CreationController extends Controller 
 {
@@ -19,6 +21,38 @@ class CreationController extends Controller
 
     public function add()
     {
+        $erreur = "";
+        // On contrôle si les champs du formulaire sont remplis
+        if (Form::validatePost($_POST, ['title', 'description', 'date']) && Form::validateFiles($_FILES, ['picture'])) {
+
+            // upload de l'image dans le dossier 'images'
+            move_uploaded_file($_FILES['picture']['tmp_name'], 'images/' . $_FILES['picture']['name']);
+            // on stocke le chemin de l'image uploadée
+            $picture = 'images/' . $_FILES['picture']['name'];
+
+            // on instancie l'entité "Création"
+            $creation = new Creation();
+
+            // on l'hydrate
+            $creation->setTitle($_POST['title']);
+            $creation->setDescription($_POST['description']);
+            $creation->setCreated_at($_POST['date']);
+            $creation->setPicture($picture);
+
+            // On instancie le model "creation"
+            $model = new CreationModel();
+            $model->create($creation);
+
+            // On redirige l'utilisateur vers la liste des créations 
+            header("Location:index.php?controller=creation&action=index");
+            exit;
+
+        } else {
+            // Message d'erreur à afficher
+            $erreur = !empty($_POST) ? "Le formulaire n'a pas été correctement rempli !" : "";
+        }
+
+
         // on instancie la classe Form pour construire le formulaire d'ajout
         $form = new Form();
 
@@ -36,7 +70,7 @@ class CreationController extends Controller
         $form->endForm();
 
         // on envoie le formulaire dans la vue add.php
-        $this->render('creation/add', ["addForm" => $form->getFormElements()]);
+        $this->render('creation/add', ["addForm" => $form->getFormElements(), "erreur" => $erreur]);
         
     }
 }
