@@ -13,6 +13,7 @@
                 <th scope="col">Description</th>
                 <th scope="col" class="text-center">Date</th>
                 <th scope="col" class="text-center">Image</th>
+                <th scope="col" class="text-center">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -23,8 +24,9 @@
                 echo "<td class='text-center'>" . $value->id_creation . "</td>";
                 echo "<td>" . $value->title . "</td>";
                 echo "<td>" . $value->description . "</td>";
-                echo "<td class='text-center'>" . $value->created_at . "</td>";
+                echo "<td class='text-center'>" . date("d/m/Y", strtotime($value->created_at)) . "</td>";
                 echo "<td class='text-center'><img src='$value->picture' class='picture' alt='$value->title'></td>";
+                echo "<td class='text-center'><a href='index.php?controller=creation&action=showCreation&id=$value->id_creation'><i class='fas fa-eye'></i></a></td>";
                 echo "</tr>";
             }
             ?>

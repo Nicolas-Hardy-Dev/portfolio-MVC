@@ -21,6 +21,19 @@ class CreationController extends Controller
         
     }
 
+    // Permet d'afficher une seule création
+    public function showCreation($id) 
+    {
+        // On instancie la classe CreationModel
+        $creations = new CreationModel();
+
+        // on stocke dans une variable le retour de la méthode find()
+        $creation = $creations->find($id);
+
+        $this->render('creation/showCreation', ['creation' => $creation]);
+
+    }
+
     public function add()
     {
         $erreur = "";
