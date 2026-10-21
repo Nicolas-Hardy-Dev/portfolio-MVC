@@ -40,7 +40,7 @@ class CreationModel extends DbConnect
     {
         $this->request = $this->connection->prepare("UPDATE creation 
                                                     SET title = :title, description = :description, created_at = :created_at, picture = :picture
-                                                    WHERE :id_creation = id_creation");
+                                                    WHERE id_creation = :id_creation");
         $this->request->bindValue(":id_creation", $id);
         $this->request->bindValue(":title", $creation->getTitle());
         $this->request->bindValue(":description", $creation->getDescription());
