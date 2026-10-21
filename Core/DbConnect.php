@@ -15,7 +15,7 @@ class DbConnect
        $config = require __DIR__ . '/../config/database.php'; 
 
        try {
-        $this->connection = new PDO('mysql:host=' . $config['host'] . ';dbname=' . $config['dbname'] . ';charset=utf8mb4', $config['user'], $config['password']);
+        $this->connection = new PDO('mysql:host=' . $config['host'] . ';port=' . $config['port'] . ';dbname=' . $config['dbname'] . ';charset=utf8mb4', $config['user'], $config['password']);
 
         // Activation erreurs PDO
         $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
