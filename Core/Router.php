@@ -6,7 +6,7 @@ class Router
     public function routes() 
     {
         // On crée la variable controller dans laquelle on va stocker le controller demandé. Première lettre en Majuscule et 'home' par défaut.
-        $controller = (isset($_GET['controller']) ? ucfirst(array_shift($_GET)) : 'home');
+        $controller = (isset($_GET['controller']) ? ucfirst(array_shift($_GET)) : 'Home');
         // On fabrique le nom complet de la classe. '\\' : un qui échappe et l'autre s'affiche.
         $controller = '\\App\\Controllers\\' . $controller . 'Controller';
 

@@ -13,8 +13,9 @@ class Autoloader
         // Contient "App\", pour éviter de le répéter.
         $prefixe = __NAMESPACE__ . '\\';
         
-        // On ne traîte que les classes présentes dans le namespace 'App\'
-        if (!str_starts_with($class, $prefixe)) { return; }
+        // On ne traite que les classes présentes dans le namespace 'App\'
+        // strpos() au lieu de str_starts_with(), absente du serveur (PHP < 8.0)
+        if (strpos($class, $prefixe) !== 0) { return; }
         
         // On enlève d'abord le préfixe.
         $relative = substr($class, strlen($prefixe) );
