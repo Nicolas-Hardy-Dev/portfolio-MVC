@@ -8,12 +8,14 @@ use App\Models\CreationModel;
 
 class CreationController extends Controller 
 {
+    // permet d'afficher la liste des créations
     public function index() 
     {
-        $list = array(
-            array('id' => 0, 'title' => 'création1', 'description' => 'description1', 'created_at' => '01/01/2010', 'picture' => 'picture1'),
-            array('id' => 1, 'title' => 'création2', 'description' => 'description2', 'created_at' => '02/01/2010', 'picture' => 'picture2')
-        );
+        // on instancie la classe CreationModel
+        $creation = new CreationModel();
+
+        // on stocke dans une variable le retour de la méthode findAll()
+        $list = $creation->findAll();
 
         $this->render('creation/index', ['list' => $list]);
         

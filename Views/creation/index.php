@@ -6,13 +6,13 @@
         <a href="index.php?controller=creation&action=add" class="btn btn-primary">Ajouter une création</a>
     </div>
     <table class="table table-hover table-striped table-bordered align-middle">
-    <thead class="table-primary">
+        <thead class="table-primary">
             <tr>
-                <th scope="col">#</th>
+                <th scope="col" class="text-center">#</th>
                 <th scope="col">Titre</th>
                 <th scope="col">Description</th>
-                <th scope="col">Date</th>
-                <th scope="col">Image</th>
+                <th scope="col" class="text-center">Date</th>
+                <th scope="col" class="text-center">Image</th>
             </tr>
         </thead>
         <tbody>
@@ -20,11 +20,11 @@
             //On boucle dans le tableau $list qui contient la liste des créations
             foreach ($list as $value) {
                 echo "<tr>";
-                echo "<td>" . $value['id'] . "</td>";
-                echo "<td>" . $value['title'] . "</td>";
-                echo "<td>" . $value['description'] . "</td>";
-                echo "<td>" . $value['created_at'] . "</td>";
-                echo "<td>" . $value['picture'] . "</td>";
+                echo "<td class='text-center'>" . $value->id_creation . "</td>";
+                echo "<td>" . $value->title . "</td>";
+                echo "<td>" . $value->description . "</td>";
+                echo "<td class='text-center'>" . $value->created_at . "</td>";
+                echo "<td class='text-center'><img src='$value->picture' class='picture' alt='$value->title'></td>";
                 echo "</tr>";
             }
             ?>
