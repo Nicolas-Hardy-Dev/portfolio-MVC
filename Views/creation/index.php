@@ -13,7 +13,7 @@
                 <th scope="col">Description</th>
                 <th scope="col" class="text-center">Date</th>
                 <th scope="col" class="text-center">Image</th>
-                <th scope="col" colspan="2" class="text-center">Actions</th>
+                <th scope="col" colspan="3" class="text-center">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -26,8 +26,9 @@
                 echo "<td>" . $value->description . "</td>";
                 echo "<td class='text-center'>" . date("d/m/Y", strtotime($value->created_at)) . "</td>";
                 echo "<td class='text-center'><img src='$value->picture' class='picture' alt='$value->title'></td>";
-                echo "<td class='text-center'><a href='index.php?controller=creation&action=showCreation&id=$value->id_creation'><i class='fas fa-eye'></i></a></td>";
-                echo "<td class='text-center'><a href='index.php?controller=creation&action=updateCreation&id=$value->id_creation'><i class='fas fa-pen'></i></a></td>";
+                echo "<td class='text-center'><a href='index.php?controller=creation&action=showCreation&id=$value->id_creation' title='Voir la création'><i class='fas fa-eye'></i></a></td>";
+                echo "<td class='text-center'><a href='index.php?controller=creation&action=updateCreation&id=$value->id_creation' title='Modifier la création'><i class='fas fa-pen'></i></a></td>";
+                echo "<td class='text-center'><a href='index.php?controller=creation&action=deleteCreation&id=$value->id_creation' title='Supprimer la création'><i class='fas fa-trash-alt'></i></a></td>";
                 echo "</tr>";
             }
             ?>

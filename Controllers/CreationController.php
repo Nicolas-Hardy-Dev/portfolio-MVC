@@ -86,7 +86,8 @@ class CreationController extends Controller
         $this->render('creation/add', ["addForm" => $form->getFormElements(), "erreur" => $erreur]);     
     }
 
-     //méthode pour la mise à jour de la création
+
+    //méthode pour la mise à jour de la création
     public function updateCreation($id)
     {
     // Initialisation de $erreur
@@ -156,8 +157,32 @@ class CreationController extends Controller
     $form->addInput("submit", "update", ["value" => "Modifier", "class" => "btn btn-primary d-block mx-auto w-50 py-2 mt-4"]);
     $form->endForm();
 
-    //on renvoie vers la vue le formulaire de mise à jour, le message d'erreur potentiel et l'image actuelle
+    // On renvoie vers la vue le formulaire de mise à jour, le message d'erreur potentiel et l'image actuelle
     // Ajout de "picture" : la vue en a besoin pour afficher l'image.
     $this->render('creation/updateCreation', ["updateForm" => $form->getFormElements(), "erreur" => $erreur, "picture" => $creation->picture, "titleCreation" => $creation->title]);
+    }
+
+
+    // Méthode pour la suppression d'une création
+    public function deleteCreation($id) 
+    {
+        if (isset($_POST['true'])) {
+            // on instancie la classe CreationModel pour exécuter la suppression avec delete() en récupérant l'id dans l'URL, si l'utilisateur a cliqué sur "OUI".
+            $creations = new CreationModel();
+            $creations->delete($id);
+            // on redirige l'utilisateur vers la liste des créations et on arrête le script.
+            header("Location:index.php?controller=creation&action=index");
+            exit;
+        } elseif (isset($_POST['false'])) {
+            // on redirige l'utilisateur vers la liste des créations et on arrête le script.
+            header("Location:index.php?controller=creation&action=index");
+            exit;
+        } else {
+            // on récupère la création avec la méthode find()
+            $creations = new CreationModel();
+            $creation = $creations->find($id);
+        }
+        // on renvoie vers la vue la création sélectionnée 
+        $this->render('creation/deleteCreation', ["creation" => $creation]);
     }
 }
