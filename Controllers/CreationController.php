@@ -35,42 +35,53 @@ class CreationController extends Controller
     public function add()
     {
         $erreur = "";
+
         // On contrôle si les champs du formulaire sont remplis
         if (Form::validatePost($_POST, ['title', 'description', 'date']) && Form::validateFiles($_FILES, ['picture'])) {
 
-            // upload de l'image dans le dossier 'images'
-            move_uploaded_file($_FILES['picture']['tmp_name'], 'images/' . $_FILES['picture']['name']);
-            // on stocke le chemin de l'image uploadée
-            $picture = 'images/' . $_FILES['picture']['name'];
+            if (!isset($_POST['token'], $_SESSION['token']) || $_POST['token'] !== $_SESSION['token']) {
+                $erreur = "Token invalide";
+            } elseif ($_SESSION['token_time'] <= time() - (10 * 60)) {
+                $erreur = "Token expiré";
+            } else {
 
-            // on instancie l'entité "Création"
-            $creation = new Creation();
+                // upload de l'image dans le dossier 'images'
+                move_uploaded_file($_FILES['picture']['tmp_name'], 'images/' . $_FILES  ['picture']['name']);
+                // on stocke le chemin de l'image uploadée
+                $picture = 'images/' . $_FILES['picture']['name'];
 
-            // on l'hydrate
-            $creation->setTitle($_POST['title']);
-            $creation->setDescription($_POST['description']);
-            $creation->setCreated_at($_POST['date']);
-            $creation->setPicture($picture);
+                // on instancie l'entité "Création"
+                $creation = new Creation();
 
-            // On instancie le model "creation"
-            $model = new CreationModel();
-            $model->create($creation);
+                // on l'hydrate
+                $creation->setTitle($_POST['title']);
+                $creation->setDescription($_POST['description']);
+                $creation->setCreated_at($_POST['date']);
+                $creation->setPicture($picture);
 
-            // On redirige l'utilisateur vers la liste des créations 
-            header("Location:index.php?controller=creation&action=index");
-            exit;
+                // On instancie le model "creation"
+                $model = new CreationModel();
+                $model->create($creation);
+
+                // On redirige l'utilisateur vers la liste des créations 
+                header("Location:index.php?controller=creation&action=index");
+                exit;
+            }
 
         } else {
             // Message d'erreur à afficher
             $erreur = !empty($_POST) ? "Le formulaire n'a pas été correctement rempli !" : "";
         }
 
+        $_SESSION['token'] = bin2hex(random_bytes(32));
+        $_SESSION['token_time'] = time();
 
         // on instancie la classe Form pour construire le formulaire d'ajout
         $form = new Form();
 
         // on construit le formulaire d'ajout
         $form->startForm("#", "POST", ["enctype" => "multipart/form-data"]);
+        $form->addInput("hidden", "token", ["value" => $_SESSION['token']] );
         $form->addLabel("title", "Titre", ["class" => "form-label fw-semibold"]);
         $form->addInput("text", "title", ["id" => "title", "class" => "form-control mb-3", "placeholder" => "Ajouter un titre", "required" => "required"]);
         $form->addLabel("description", "Description", ["class" => "form-label fw-semibold"]);
@@ -96,39 +107,47 @@ class CreationController extends Controller
     //on contrôle si les champs du formulaire sont remplis
     if (Form::validatePost($_POST, ['title', 'description', 'date', 'hidden'])) {
 
-        //on instancie l'entité "Creation"
-        $creation = new Creation();
-
-        //on l'hydrate
-        $creation->setTitle($_POST['title']);
-        $creation->setDescription($_POST['description']);
-        $creation->setCreated_at($_POST['date']);
-
-        //si une nouvelle image a été uploadée
-        if (Form::validateFiles($_FILES, ['picture'])) {
-
-            //upload de l'image dans le dossier "images"
-            move_uploaded_file($_FILES["picture"]["tmp_name"], "images/" . $_FILES["picture"]["name"]);
-
-            //on stocke le chemin de l'image
-            $picture = "images/" . $_FILES["picture"]["name"];
-
-            //on hydrate la propriété picture de la classe "Creation"
-            $creation->setPicture($picture);
-
-        //sinon on garde le lien de l'image par défaut du champ caché
+        // on contrôle si le token est présent et valide
+        if (!isset($_POST['token'], $_SESSION['token']) || $_POST['token'] !== $_SESSION['token']) {
+            $erreur = "Token invalide";
+        } elseif ($_SESSION['token_time'] <= time() - (10 * 60)) {
+            $erreur = "Token expiré";
         } else {
+
+            //on instancie l'entité "Creation"
+            $creation = new Creation();
+
+            //on l'hydrate
+            $creation->setTitle($_POST['title']);
+            $creation->setDescription($_POST['description']);
+            $creation->setCreated_at($_POST['date']);
+
+            //si une nouvelle image a été uploadée
+            if (Form::validateFiles($_FILES, ['picture'])) {
+
+                //upload de l'image dans le dossier "images"
+                move_uploaded_file($_FILES["picture"]["tmp_name"], "images/" . $_FILES["picture"]["name"]);
+
+                //on stocke le chemin de l'image
+                $picture = "images/" . $_FILES["picture"]["name"];
+
+                //on hydrate la propriété picture de la classe "Creation"
+                $creation->setPicture($picture);
+
+            //sinon on garde le lien de l'image par défaut du champ caché
+            } else {
             $creation->setPicture($_POST['hidden']);
+            }
+
+            //on instancie le modèle "creation" pour l'update
+            $creations = new CreationModel();
+            $creations->update($id, $creation);
+
+            //on redirige l'utilisateur vers la liste des créations
+            header("Location:index.php?controller=creation&action=index");
+            // Arrêt du script après la redirection
+            exit;
         }
-
-        //on instancie le modèle "creation" pour l'update
-        $creations = new CreationModel();
-        $creations->update($id, $creation);
-
-        //on redirige l'utilisateur vers la liste des créations
-        header("Location:index.php?controller=creation&action=index");
-        // Arrêt du script après la redirection
-        exit;
 
     } else {
 
@@ -140,10 +159,15 @@ class CreationController extends Controller
     $creations = new CreationModel();
     $creation = $creations->find($id);
 
+    // on crée le token de session
+    $_SESSION['token'] = bin2hex(random_bytes(32));
+    $_SESSION['token_time'] = time();
+
     //on construit le formulaire de mise à jour
     $form = new Form();
 
     $form->startForm("#", "POST", ["enctype" => "multipart/form-data"]);
+    $form->addInput("hidden", "token", ["value" => $_SESSION['token']] );
     $form->addLabel("title", "Titre", ["class" => "form-label fw-semibold"]);
     $form->addInput("text", "title", ["id" => "title", "class" => "form-control mb-3", "placeholder" => "Ajouter un titre", "value" => $creation->title]);
     $form->addLabel("description", "Description", ["class" => "form-label fw-semibold"]);
@@ -166,23 +190,35 @@ class CreationController extends Controller
     // Méthode pour la suppression d'une création
     public function deleteCreation($id) 
     {
+        $erreur = "";
         if (isset($_POST['true'])) {
-            // on instancie la classe CreationModel pour exécuter la suppression avec delete() en récupérant l'id dans l'URL, si l'utilisateur a cliqué sur "OUI".
-            $creations = new CreationModel();
-            $creations->delete($id);
-            // on redirige l'utilisateur vers la liste des créations et on arrête le script.
-            header("Location:index.php?controller=creation&action=index");
-            exit;
+            if (!isset($_POST['token'], $_SESSION['token']) || $_POST['token'] !== $_SESSION['token']) {
+                $erreur = "Token invalide";
+            } elseif ($_SESSION['token_time'] <= time() - (10 * 60)) {
+                $erreur = "Token expiré";
+            } else {
+                // on instancie la classe CreationModel pour exécuter la suppression avec delete() en récupérant l'id dans l'URL, si l'utilisateur a cliqué sur "OUI".
+                $creations = new CreationModel();
+                $creations->delete($id);
+                // on redirige l'utilisateur vers la liste des créations et on arrête le script.
+                header("Location:index.php?controller=creation&action=index");
+                exit;
+            }
         } elseif (isset($_POST['false'])) {
             // on redirige l'utilisateur vers la liste des créations et on arrête le script.
             header("Location:index.php?controller=creation&action=index");
             exit;
-        } else {
-            // on récupère la création avec la méthode find()
-            $creations = new CreationModel();
-            $creation = $creations->find($id);
-        }
-        // on renvoie vers la vue la création sélectionnée 
-        $this->render('creation/deleteCreation', ["creation" => $creation]);
+        } 
+
+        // on crée le token de session
+        $_SESSION['token'] = bin2hex(random_bytes(32));
+        $_SESSION['token_time'] = time();
+
+        // on récupère la création avec la méthode find()
+        $creations = new CreationModel();
+        $creation = $creations->find($id);
+
+        // on renvoie vers la vue la création sélectionnée et le token à inséré dans le formulaire de suppression.
+        $this->render('creation/deleteCreation', ["creation" => $creation, "token" => $_SESSION['token'], "erreur" => $erreur]);
     }
 }
