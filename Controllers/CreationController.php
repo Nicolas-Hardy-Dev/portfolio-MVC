@@ -45,27 +45,30 @@ class CreationController extends Controller
                 $erreur = "Token expiré";
             } else {
 
-                // upload de l'image dans le dossier 'images'
-                move_uploaded_file($_FILES['picture']['tmp_name'], 'images/' . $_FILES  ['picture']['name']);
-                // on stocke le chemin de l'image uploadée
-                $picture = 'images/' . $_FILES['picture']['name'];
+                // on vérifie et on déplace l'image 
+                $upload = $this->verifUpload();
 
-                // on instancie l'entité "Création"
-                $creation = new Creation();
+                if ($upload['erreur'] !== "") {
+                    $erreur = $upload['erreur'];
+                } else {
 
-                // on l'hydrate
-                $creation->setTitle($_POST['title']);
-                $creation->setDescription($_POST['description']);
-                $creation->setCreated_at($_POST['date']);
-                $creation->setPicture($picture);
+                    // on instancie l'entité "Création"
+                    $creation = new Creation();
 
-                // On instancie le model "creation"
-                $model = new CreationModel();
-                $model->create($creation);
+                    // on l'hydrate
+                    $creation->setTitle($_POST['title']);
+                    $creation->setDescription($_POST['description']);
+                    $creation->setCreated_at($_POST['date']);
+                    $creation->setPicture($upload['picture']);
 
-                // On redirige l'utilisateur vers la liste des créations 
-                header("Location:index.php?controller=creation&action=index");
-                exit;
+                    // On instancie le model "creation"
+                    $model = new CreationModel();
+                    $model->create($creation);
+
+                    // On redirige l'utilisateur vers la liste des créations 
+                    header("Location:index.php?controller=creation&action=index");
+                    exit;
+                }
             }
 
         } else {
@@ -125,28 +128,34 @@ class CreationController extends Controller
             //si une nouvelle image a été uploadée
             if (Form::validateFiles($_FILES, ['picture'])) {
 
-                //upload de l'image dans le dossier "images"
-                move_uploaded_file($_FILES["picture"]["tmp_name"], "images/" . $_FILES["picture"]["name"]);
+                // on vérifie et on déplace l'image 
+                $upload = $this->verifUpload();
 
-                //on stocke le chemin de l'image
-                $picture = "images/" . $_FILES["picture"]["name"];
+                if ($upload['erreur'] !== "") {
+                    // l'image est refusée, on transfère le message d'erreur dans la variable associée
+                    $erreur = $upload['erreur'];
+                } else {
+                    //on hydrate la propriété picture de la classe "Creation"
+                    $creation->setPicture($upload['picture']);
+                }   
 
-                //on hydrate la propriété picture de la classe "Creation"
-                $creation->setPicture($picture);
-
-            //sinon on garde le lien de l'image par défaut du champ caché
+            //sinon on garde le lien de l'image actuelle du champ caché
             } else {
-            $creation->setPicture($_POST['hidden']);
+                $creation->setPicture($_POST['hidden']);
             }
 
-            //on instancie le modèle "creation" pour l'update
-            $creations = new CreationModel();
-            $creations->update($id, $creation);
-
-            //on redirige l'utilisateur vers la liste des créations
-            header("Location:index.php?controller=creation&action=index");
-            // Arrêt du script après la redirection
-            exit;
+            // Aucune erreur d'upload, donc mise à jour de la création.
+            if ($erreur === "") {
+                
+                //on instancie le modèle "creation" pour l'update
+                $creations = new CreationModel();
+                $creations->update($id, $creation);
+                
+                //on redirige l'utilisateur vers la liste des créations
+                header("Location:index.php?controller=creation&action=index");
+                // Arrêt du script après la redirection
+                exit;
+            }   
         }
 
     } else {
@@ -220,5 +229,36 @@ class CreationController extends Controller
 
         // on renvoie vers la vue la création sélectionnée et le token à inséré dans le formulaire de suppression.
         $this->render('creation/deleteCreation', ["creation" => $creation, "token" => $_SESSION['token'], "erreur" => $erreur]);
+    }
+
+    private function verifUpload() 
+    {
+
+        $types = ["jpg" => "image/jpeg", "jpeg" => "image/jpeg", "png" => "image/png", "gif" => "image/gif"];
+
+        $ext = strtolower(pathinfo($_FILES['picture']['name'], PATHINFO_EXTENSION));
+
+        if (!array_key_exists($ext, $types)) {
+            return ["erreur" => "Format incorrect", "picture" => ""];
+        }
+
+        if ($_FILES['picture']['size'] > 2 * 1024 * 1024) {
+            return ["erreur" => "Fichier trop lourd (2 Mo maximum)", "picture" => ""];
+        }
+
+        // Type MIME analysé par le serveur, pas l'étiquette du navigateur
+        $mime = mime_content_type($_FILES['picture']['tmp_name']);
+
+        if ($mime !== $types[$ext]) {
+            return ["erreur" => "Le contenu ne correspond pas à l'extension", "picture" => ""];
+        }
+
+        // Nouveau nom unique, puis déplacement dans le dossier images
+        $file = uniqid('', true) . "." . $ext;
+        move_uploaded_file($_FILES['picture']['tmp_name'], "images/" . $file);
+
+        // Tout est bon : pas d'erreur, et le chemin à enregistrer en BDD
+        return ["erreur" => "", "picture" => "images/" . $file];
+        
     }
 }
