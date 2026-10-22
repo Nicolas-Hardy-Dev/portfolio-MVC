@@ -23,7 +23,7 @@ class Form
         foreach ($attributes as $attribute => $value) {
             // on stocke chaque attribut et sa valeur dans la variable $att. exemple: id = "title"
             // A sécuriser avec htmlspecialchars()
-            $att .= " $attribute=\"$value\"";
+            $att .= "$attribute=\"" . htmlspecialchars($value, ENT_QUOTES) . "\"";
         }
         return $att;
     }
@@ -63,7 +63,7 @@ class Form
         //on ajoute la balise textarea et l'attribut "name"
         $this->formElements .= "<textarea name='$name'";
         $this->formElements .= isset($attributes) ? $this->addAttributes($attributes) . ">" : ">";
-        $this->formElements .= "$text</textarea>";
+        $this->formElements .= htmlspecialchars($text, ENT_QUOTES) . "</textarea>";
         return $this;
     }
 

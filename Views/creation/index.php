@@ -22,10 +22,10 @@
             foreach ($list as $value) {
                 echo "<tr>";
                 echo "<td class='text-center'>" . $value->id_creation . "</td>";
-                echo "<td>" . $value->title . "</td>";
-                echo "<td>" . $value->description . "</td>";
+                echo "<td>" . htmlspecialchars($value->title, ENT_QUOTES) . "</td>";
+                echo "<td>" . htmlspecialchars($value->description, ENT_QUOTES) . "</td>";
                 echo "<td class='text-center'>" . date("d/m/Y", strtotime($value->created_at)) . "</td>";
-                echo "<td class='text-center'><img src='$value->picture' class='picture' alt='$value->title'></td>";
+                echo "<td class='text-center'><img src='" . htmlspecialchars($value->picture, ENT_QUOTES) . "' class='picture' alt='" . htmlspecialchars($value->title, ENT_QUOTES) . "'></td>";
                 echo "<td class='text-center'><a href='index.php?controller=creation&action=showCreation&id=$value->id_creation' title='Voir la création'><i class='fas fa-eye'></i></a></td>";
                 echo "<td class='text-center'><a href='index.php?controller=creation&action=updateCreation&id=$value->id_creation' title='Modifier la création'><i class='fas fa-pen'></i></a></td>";
                 echo "<td class='text-center'><a href='index.php?controller=creation&action=deleteCreation&id=$value->id_creation' title='Supprimer la création'><i class='fas fa-trash-alt'></i></a></td>";

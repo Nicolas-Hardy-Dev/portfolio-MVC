@@ -12,7 +12,7 @@
     <?php } ?>
     
     <section class="row">
-        <div class="col-2 align-self-end"><img class="img-fluid" src="<?= $picture ?>" alt="<?= $titleCreation ?>"></div>
+        <div class="col-2 align-self-end"><img class="img-fluid" src="<?= htmlspecialchars($picture, ENT_QUOTES) ?>" alt="<?= htmlspecialchars($titleCreation, ENT_QUOTES) ?>"></div>
         <div class="col-10"><?= $updateForm ?></div>
     </section>
 </div>
