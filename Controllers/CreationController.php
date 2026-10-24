@@ -77,6 +77,7 @@ class CreationController extends Controller
             $erreur = !empty($_POST) ? "Le formulaire n'a pas été correctement rempli !" : "";
         }
 
+        // génération du token
         $token = CsrfToken::generate();
 
         // on instancie la classe Form pour construire le formulaire d'ajout
