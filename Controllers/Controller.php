@@ -4,7 +4,7 @@ namespace App\Controllers;
 
 abstract class Controller 
 {
-    public function render(string $path, array $data = [])
+    protected function render(string $path, array $data = [])
     {
         // On extrait les données sous forme de variables
         extract($data);
@@ -20,5 +20,13 @@ abstract class Controller
 
         // On fabrique le template
         include dirname(__DIR__) . '/Views/base.php';
+    }
+
+    protected function requireLogin() 
+    {
+        if (!isset($_SESSION['username'])) {
+            header("Location:index.php?controller=user&action=login");
+            exit;
+        }
     }
 }

@@ -37,6 +37,9 @@ class CreationController extends Controller
 
     public function add()
     {
+        // Accès réservé aux admins
+        $this->requireLogin();
+
         $erreur = "";
 
         // On contrôle si les champs du formulaire sont remplis
@@ -105,99 +108,106 @@ class CreationController extends Controller
     //méthode pour la mise à jour de la création
     public function updateCreation($id)
     {
-    // Initialisation de $erreur
-    $erreur = "";
+        // Accès réservé aux admins
+        $this->requireLogin();
 
-    //on contrôle si les champs du formulaire sont remplis
-    if (Form::validatePost($_POST, ['title', 'description', 'date', 'hidden'])) {
+        // Initialisation de $erreur
+        $erreur = "";
 
-        // on contrôle si le token est présent et valide
-        $erreur = CsrfToken::verify();
+        //on contrôle si les champs du formulaire sont remplis
+        if (Form::validatePost($_POST, ['title', 'description', 'date', 'hidden'])) {
 
-        if ($erreur === "") {
+            // on contrôle si le token est présent et valide
+            $erreur = CsrfToken::verify();
 
-            //on instancie l'entité "Creation"
-            $creation = new Creation();
+            if ($erreur === "") {
 
-            //on l'hydrate
-            $creation->setTitle($_POST['title']);
-            $creation->setDescription($_POST['description']);
-            $creation->setCreated_at($_POST['date']);
+                //on instancie l'entité "Creation"
+                $creation = new Creation();
 
-            //si une nouvelle image a été uploadée
-            if (Form::validateFiles($_FILES, ['picture'])) {
+                //on l'hydrate
+                $creation->setTitle($_POST['title']);
+                $creation->setDescription($_POST['description']);
+                $creation->setCreated_at($_POST['date']);
 
-                // on vérifie et on déplace l'image 
-                $upload = FileUploader::upload($_FILES['picture'], "images");
+                //si une nouvelle image a été uploadée
+                if (Form::validateFiles($_FILES, ['picture'])) {
 
-                if ($upload['erreur'] !== "") {
-                    // l'image est refusée, on transfère le message d'erreur dans la variable associée
-                    $erreur = $upload['erreur'];
+                    // on vérifie et on déplace l'image 
+                    $upload = FileUploader::upload($_FILES['picture'], "images");
+
+                    if ($upload['erreur'] !== "") {
+                        // l'image est refusée, on transfère le message d'erreur dans la variable associée
+                        $erreur = $upload['erreur'];
+                    } else {
+                        //on hydrate la propriété picture de la classe "Creation"
+                        $creation->setPicture($upload['filePath']);
+                    }   
+
+                //sinon on garde le lien de l'image actuelle du champ caché
                 } else {
-                    //on hydrate la propriété picture de la classe "Creation"
-                    $creation->setPicture($upload['filePath']);
-                }   
+                    $creation->setPicture($_POST['hidden']);
+                }
 
-            //sinon on garde le lien de l'image actuelle du champ caché
-            } else {
-                $creation->setPicture($_POST['hidden']);
+                // Aucune erreur d'upload, donc mise à jour de la création.
+                if ($erreur === "") {
+                
+                    //on instancie le modèle "creation" pour l'update
+                    $creations = new CreationModel();
+                    $creations->update($id, $creation);
+                
+                    //on redirige l'utilisateur vers la liste des créations
+                    header("Location:index.php?controller=creation&action=index");
+                    // Arrêt du script après la redirection
+                    exit;
+                }   
             }
 
-            // Aucune erreur d'upload, donc mise à jour de la création.
-            if ($erreur === "") {
-                
-                //on instancie le modèle "creation" pour l'update
-                $creations = new CreationModel();
-                $creations->update($id, $creation);
-                
-                //on redirige l'utilisateur vers la liste des créations
-                header("Location:index.php?controller=creation&action=index");
-                // Arrêt du script après la redirection
-                exit;
-            }   
+        } else {
+
+            //on affiche un message d'erreur
+            $erreur = !empty($_POST) ? "Le formulaire n'a pas été correctement rempli" : "";
         }
 
-    } else {
+        //on instancie le modèle pour récupérer les informations de la création
+        $creations = new CreationModel();
+        $creation = $creations->find($id);
 
-        //on affiche un message d'erreur
-        $erreur = !empty($_POST) ? "Le formulaire n'a pas été correctement rempli" : "";
-    }
+        // on crée le token de session
+        $token = CsrfToken::generate();
 
-    //on instancie le modèle pour récupérer les informations de la création
-    $creations = new CreationModel();
-    $creation = $creations->find($id);
+        //on construit le formulaire de mise à jour
+        $form = new Form();
 
-    // on crée le token de session
-    $token = CsrfToken::generate();
+        $form->startForm("#", "POST", ["enctype" => "multipart/form-data"]);
+        $form->addInput("hidden", "token", ["value" => $token] );
+        $form->addLabel("title", "Titre", ["class" => "form-label fw-semibold"]);
+        $form->addInput("text", "title", ["id" => "title", "class" => "form-control mb-3", "placeholder" => "Ajouter un titre", "value" => $creation->title]);
+        $form->addLabel("description", "Description", ["class" => "form-label fw-semibold"]);
+        $form->addTextarea("description", $creation->description, ["id" => "description", "class" => "form-control mb-3", "rows" => 15]);
+        $form->addLabel("date", "Date de publication", ["class" => "form-label fw-semibold"]);
+        $form->addInput("text", "date", ["id" => "date", "class" => "form-control mb-3", "value" => $creation->created_at, "readonly" => ""]);
+        $form->addLabel("picture", "Image de la création", ["class" => "form-label fw-semibold"]);
+        $form->addInput("file", "picture", ["id" => "picture", "class" => "form-control mb-3"]);
+        // type "hidden" au lieu d'un champ texte avec l'attribut hidden
+        $form->addInput("hidden", "hidden", ["id" => "hidden", "value" => $creation->picture]);
+        $form->addInput("submit", "update", ["value" => "Modifier", "class" => "btn btn-primary d-block mx-auto w-50 py-2 mt-4"]);
+        $form->endForm();
 
-    //on construit le formulaire de mise à jour
-    $form = new Form();
-
-    $form->startForm("#", "POST", ["enctype" => "multipart/form-data"]);
-    $form->addInput("hidden", "token", ["value" => $token] );
-    $form->addLabel("title", "Titre", ["class" => "form-label fw-semibold"]);
-    $form->addInput("text", "title", ["id" => "title", "class" => "form-control mb-3", "placeholder" => "Ajouter un titre", "value" => $creation->title]);
-    $form->addLabel("description", "Description", ["class" => "form-label fw-semibold"]);
-    $form->addTextarea("description", $creation->description, ["id" => "description", "class" => "form-control mb-3", "rows" => 15]);
-    $form->addLabel("date", "Date de publication", ["class" => "form-label fw-semibold"]);
-    $form->addInput("text", "date", ["id" => "date", "class" => "form-control mb-3", "value" => $creation->created_at, "readonly" => ""]);
-    $form->addLabel("picture", "Image de la création", ["class" => "form-label fw-semibold"]);
-    $form->addInput("file", "picture", ["id" => "picture", "class" => "form-control mb-3"]);
-    // type "hidden" au lieu d'un champ texte avec l'attribut hidden
-    $form->addInput("hidden", "hidden", ["id" => "hidden", "value" => $creation->picture]);
-    $form->addInput("submit", "update", ["value" => "Modifier", "class" => "btn btn-primary d-block mx-auto w-50 py-2 mt-4"]);
-    $form->endForm();
-
-    // On renvoie vers la vue le formulaire de mise à jour, le message d'erreur potentiel et l'image actuelle
-    // Ajout de "picture" : la vue en a besoin pour afficher l'image.
-    $this->render('creation/updateCreation', ["updateForm" => $form->getFormElements(), "erreur" => $erreur, "picture" => $creation->picture, "titleCreation" => $creation->title]);
-    }
+        // On renvoie vers la vue le formulaire de mise à jour, le message d'erreur potentiel et l'image actuelle
+        // Ajout de "picture" : la vue en a besoin pour afficher l'image.
+        $this->render('creation/updateCreation', ["updateForm" => $form->getFormElements(), "erreur" => $erreur, "picture" => $creation->picture, "titleCreation" => $creation->title]);
+        }
 
 
     // Méthode pour la suppression d'une création
     public function deleteCreation($id) 
     {
+        // Accès réservé aux admins
+        $this->requireLogin();
+
         $erreur = "";
+
         if (isset($_POST['true'])) {
             
             $erreur = CsrfToken::verify();
