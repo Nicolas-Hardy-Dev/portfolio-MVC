@@ -2,10 +2,12 @@
 
 namespace App\Controllers;
 
+
 use App\Core\Form;
 use App\Entities\Creation;
 use App\Models\CreationModel;
 use App\Core\FileUploader;
+use App\Core\CsrfToken;
 
 class CreationController extends Controller 
 {
@@ -40,11 +42,9 @@ class CreationController extends Controller
         // On contrôle si les champs du formulaire sont remplis
         if (Form::validatePost($_POST, ['title', 'description', 'date']) && Form::validateFiles($_FILES, ['picture'])) {
 
-            if (!isset($_POST['token'], $_SESSION['token']) || $_POST['token'] !== $_SESSION['token']) {
-                $erreur = "Token invalide";
-            } elseif ($_SESSION['token_time'] <= time() - (10 * 60)) {
-                $erreur = "Token expiré";
-            } else {
+            $erreur = CsrfToken::verify();
+
+            if ($erreur === "") {
 
                 // on vérifie et on déplace l'image 
                 $upload = FileUploader::upload($_FILES['picture'], "images");
@@ -77,15 +77,14 @@ class CreationController extends Controller
             $erreur = !empty($_POST) ? "Le formulaire n'a pas été correctement rempli !" : "";
         }
 
-        $_SESSION['token'] = bin2hex(random_bytes(32));
-        $_SESSION['token_time'] = time();
+        $token = CsrfToken::generate();
 
         // on instancie la classe Form pour construire le formulaire d'ajout
         $form = new Form();
 
         // on construit le formulaire d'ajout
         $form->startForm("#", "POST", ["enctype" => "multipart/form-data"]);
-        $form->addInput("hidden", "token", ["value" => $_SESSION['token']] );
+        $form->addInput("hidden", "token", ["value" => $token] );
         $form->addLabel("title", "Titre", ["class" => "form-label fw-semibold"]);
         $form->addInput("text", "title", ["id" => "title", "class" => "form-control mb-3", "placeholder" => "Ajouter un titre", "required" => "required"]);
         $form->addLabel("description", "Description", ["class" => "form-label fw-semibold"]);
@@ -112,11 +111,9 @@ class CreationController extends Controller
     if (Form::validatePost($_POST, ['title', 'description', 'date', 'hidden'])) {
 
         // on contrôle si le token est présent et valide
-        if (!isset($_POST['token'], $_SESSION['token']) || $_POST['token'] !== $_SESSION['token']) {
-            $erreur = "Token invalide";
-        } elseif ($_SESSION['token_time'] <= time() - (10 * 60)) {
-            $erreur = "Token expiré";
-        } else {
+        $erreur = CsrfToken::verify();
+
+        if ($erreur === "") {
 
             //on instancie l'entité "Creation"
             $creation = new Creation();
@@ -170,14 +167,13 @@ class CreationController extends Controller
     $creation = $creations->find($id);
 
     // on crée le token de session
-    $_SESSION['token'] = bin2hex(random_bytes(32));
-    $_SESSION['token_time'] = time();
+    $token = CsrfToken::generate();
 
     //on construit le formulaire de mise à jour
     $form = new Form();
 
     $form->startForm("#", "POST", ["enctype" => "multipart/form-data"]);
-    $form->addInput("hidden", "token", ["value" => $_SESSION['token']] );
+    $form->addInput("hidden", "token", ["value" => $token] );
     $form->addLabel("title", "Titre", ["class" => "form-label fw-semibold"]);
     $form->addInput("text", "title", ["id" => "title", "class" => "form-control mb-3", "placeholder" => "Ajouter un titre", "value" => $creation->title]);
     $form->addLabel("description", "Description", ["class" => "form-label fw-semibold"]);
@@ -202,11 +198,10 @@ class CreationController extends Controller
     {
         $erreur = "";
         if (isset($_POST['true'])) {
-            if (!isset($_POST['token'], $_SESSION['token']) || $_POST['token'] !== $_SESSION['token']) {
-                $erreur = "Token invalide";
-            } elseif ($_SESSION['token_time'] <= time() - (10 * 60)) {
-                $erreur = "Token expiré";
-            } else {
+            
+            $erreur = CsrfToken::verify();
+
+            if ($erreur === "") {
                 // on instancie la classe CreationModel pour exécuter la suppression avec delete() en récupérant l'id dans l'URL, si l'utilisateur a cliqué sur "OUI".
                 $creations = new CreationModel();
                 $creations->delete($id);
@@ -221,14 +216,13 @@ class CreationController extends Controller
         } 
 
         // on crée le token de session
-        $_SESSION['token'] = bin2hex(random_bytes(32));
-        $_SESSION['token_time'] = time();
+        $token = CsrfToken::generate();
 
         // on récupère la création avec la méthode find()
         $creations = new CreationModel();
         $creation = $creations->find($id);
 
         // on renvoie vers la vue la création sélectionnée et le token à inséré dans le formulaire de suppression.
-        $this->render('creation/deleteCreation', ["creation" => $creation, "token" => $_SESSION['token'], "erreur" => $erreur]);
+        $this->render('creation/deleteCreation', ["creation" => $creation, "token" => $token, "erreur" => $erreur]);
     }
 }
