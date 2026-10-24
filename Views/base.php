@@ -31,6 +31,15 @@
                         <li class="nav-item">
                             <a class="nav-link" href="index.php?controller=creation&action=index">Mes créations</a>
                         </li>
+                        <?php if (isset($_SESSION['username'])) { ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.php?controller=user&action=logout">Se déconnecter</a>
+                        </li>
+                        <?php } else { ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.php?controller=user&action=login">Se connecter</a>
+                        </li>
+                        <?php } ?> 
                     </ul>
                 </div>
             </div>

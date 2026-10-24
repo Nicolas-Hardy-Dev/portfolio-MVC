@@ -25,7 +25,10 @@ class UserController extends Controller
                 $user = $model->findByUsername($_POST['username']);
 
                 if (($user !== false) && password_verify($_POST['password'], $user->password)) {
-                    echo '<div class="alert alert-danger" role="alert">Vous êtes connecté ! </div>';
+                    session_regenerate_id(true);
+                    $_SESSION['username'] = $user->username;
+                    header("Location:index.php?controller=creation&action=index");
+                    exit;                    
                 } else {
                     $erreur = "Les identifiants de connexion sont incorrects.";
                 }
@@ -61,6 +64,10 @@ class UserController extends Controller
 
     public function logout()
     {
+        session_unset(); // vide $_SESSION
+        session_destroy(); // détruit la session sur le serveur
+        header("Location:index.php");
+        exit;
 
     }
 }
