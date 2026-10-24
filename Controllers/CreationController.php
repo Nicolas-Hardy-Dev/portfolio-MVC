@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Core\Form;
 use App\Entities\Creation;
 use App\Models\CreationModel;
+use App\Core\FileUploader;
 
 class CreationController extends Controller 
 {
@@ -46,7 +47,7 @@ class CreationController extends Controller
             } else {
 
                 // on vérifie et on déplace l'image 
-                $upload = $this->verifUpload();
+                $upload = FileUploader::upload($_FILES['picture'], "images");
 
                 if ($upload['erreur'] !== "") {
                     $erreur = $upload['erreur'];
@@ -59,7 +60,7 @@ class CreationController extends Controller
                     $creation->setTitle($_POST['title']);
                     $creation->setDescription($_POST['description']);
                     $creation->setCreated_at($_POST['date']);
-                    $creation->setPicture($upload['picture']);
+                    $creation->setPicture($upload['filePath']);
 
                     // On instancie le model "creation"
                     $model = new CreationModel();
@@ -129,14 +130,14 @@ class CreationController extends Controller
             if (Form::validateFiles($_FILES, ['picture'])) {
 
                 // on vérifie et on déplace l'image 
-                $upload = $this->verifUpload();
+                $upload = FileUploader::upload($_FILES['picture'], "images");
 
                 if ($upload['erreur'] !== "") {
                     // l'image est refusée, on transfère le message d'erreur dans la variable associée
                     $erreur = $upload['erreur'];
                 } else {
                     //on hydrate la propriété picture de la classe "Creation"
-                    $creation->setPicture($upload['picture']);
+                    $creation->setPicture($upload['filePath']);
                 }   
 
             //sinon on garde le lien de l'image actuelle du champ caché
@@ -229,36 +230,5 @@ class CreationController extends Controller
 
         // on renvoie vers la vue la création sélectionnée et le token à inséré dans le formulaire de suppression.
         $this->render('creation/deleteCreation', ["creation" => $creation, "token" => $_SESSION['token'], "erreur" => $erreur]);
-    }
-
-    private function verifUpload() 
-    {
-
-        $types = ["jpg" => "image/jpeg", "jpeg" => "image/jpeg", "png" => "image/png", "gif" => "image/gif"];
-
-        $ext = strtolower(pathinfo($_FILES['picture']['name'], PATHINFO_EXTENSION));
-
-        if (!array_key_exists($ext, $types)) {
-            return ["erreur" => "Format incorrect", "picture" => ""];
-        }
-
-        if ($_FILES['picture']['size'] > 2 * 1024 * 1024) {
-            return ["erreur" => "Fichier trop lourd (2 Mo maximum)", "picture" => ""];
-        }
-
-        // Type MIME analysé par le serveur, pas l'étiquette du navigateur
-        $mime = mime_content_type($_FILES['picture']['tmp_name']);
-
-        if ($mime !== $types[$ext]) {
-            return ["erreur" => "Le contenu ne correspond pas à l'extension", "picture" => ""];
-        }
-
-        // Nouveau nom unique, puis déplacement dans le dossier images
-        $file = uniqid('', true) . "." . $ext;
-        move_uploaded_file($_FILES['picture']['tmp_name'], "images/" . $file);
-
-        // Tout est bon : pas d'erreur, et le chemin à enregistrer en BDD
-        return ["erreur" => "", "picture" => "images/" . $file];
-        
     }
 }
